@@ -44,3 +44,25 @@ class GEERawResponse(BaseModel):
     """Respuesta cruda de GEE para desarrollo"""
     data: Dict[str, Any]
     metadata: Dict[str, str]
+
+# Schemas for Historical Fire Pixel Count API
+
+class GEEHistoricalFireDay(BaseModel):
+    """Schema for a single day's fire pixel count from GEE."""
+    date: str  # Format YYYY-MM-DD
+    fire_pixel_count: int
+
+class GEEHistoricalSummary(BaseModel):
+    """Schema for the summary of GEE historical fire data."""
+    start_date: str
+    end_date: str
+    total_days_analyzed: int
+    days_with_fires: int
+    total_fire_pixels: int
+    max_pixels_in_a_day: int
+    peak_fire_date: str | None # Date with the maximum pixels
+
+class GEEHistoricalApiResponse(BaseModel):
+    """Schema for the complete API response for GEE historical fires."""
+    summary: GEEHistoricalSummary
+    daily_data: List[GEEHistoricalFireDay]
