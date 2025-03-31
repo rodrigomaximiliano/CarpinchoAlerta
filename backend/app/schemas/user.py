@@ -29,3 +29,8 @@ class User(UserInDBBase):
 class UserWithToken(User):
     access_token: str
     token_type: str = "bearer"
+
+# Nuevo schema para la respuesta del token en /login
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
