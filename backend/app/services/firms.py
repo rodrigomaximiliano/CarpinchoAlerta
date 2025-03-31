@@ -37,11 +37,11 @@ def _map_confidence(confidence: str | int) -> str:
             return "Baja"
     return "Desconocida" # Si no coincide
 
-def _combine_datetime(acq_date: str, acq_time: str) -> str:
-    """Combina fecha (YYYY-MM-DD) y hora (HHMM) en ISO 8601 UTC."""
+def _combine_datetime(acq_date: str, acq_time: int) -> str | None:
+    """Combina fecha (YYYY-MM-DD) y hora (HHMM como int) en ISO 8601 UTC."""
     try:
-        # Asegurarse que acq_time tenga 4 dígitos (rellenar con 0 si es necesario)
-        time_str = acq_time.zfill(4)
+        # Convertir acq_time a string y asegurarse que tenga 4 dígitos
+        time_str = str(acq_time).zfill(4) # <- Convertido a str antes de zfill
         dt_str = f"{acq_date}T{time_str[:2]}:{time_str[2:]}:00Z"
         # Validar y formatear (esto podría fallar si las fechas/horas son inválidas)
         dt_obj = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%SZ")

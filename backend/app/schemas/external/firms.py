@@ -8,7 +8,7 @@ class FIRMSFireData(BaseModel):
     longitude: float
     bright_ti4: float # Temperatura de brillo banda I4 (Kelvin)
     acq_date: str # Formato YYYY-MM-DD
-    acq_time: str # Formato HHMM
+    acq_time: int # Formato HHMM
     confidence: str | int # Puede ser 'l', 'n', 'h' o numérico 0-100
     frp: float # Potencia Radiativa del Fuego
     # Otros campos opcionales que podrían venir:

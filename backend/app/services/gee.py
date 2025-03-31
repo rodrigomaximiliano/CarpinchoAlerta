@@ -21,11 +21,11 @@ class GEEService:
         if GEEService._initialized:
             return
 
-        logger.info("Asegurando inicialización de GEE...")
+        logger.info("Asegurando inicialización de GEE (usando credenciales de usuario/default)...")
         try:
-            # Intentar inicializar GEE
-            ee.Initialize(opt_url='https://earthengine-highvolume.googleapis.com')
-            logger.info("✅ Google Earth Engine inicializado correctamente.")
+            # Intentar inicializar GEE - buscará credenciales de earthengine authenticate
+            ee.Initialize()
+            logger.info("✅ Google Earth Engine inicializado correctamente (usando credenciales default).")
             GEEService._initialized = True
         except ee.EEException as e:
             logger.error(f"Error inicializando Google Earth Engine: {str(e)}")

@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Incendios Corrientes API"
@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     FIRMS_API_KEY: str
     GEE_CREDENTIAL_PATH: str = "./config/credentials/service-account.json"
     GEE_SERVICE_ACCOUNT_EMAIL: str
+    GEE_API_KEY: str
 
     class Config:
         env_file = ".env"
