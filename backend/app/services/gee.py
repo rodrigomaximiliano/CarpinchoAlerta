@@ -21,19 +21,40 @@ class GEEService:
         if GEEService._initialized:
             return
 
-        logger.info("Asegurando inicialización de GEE (usando credenciales de usuario/default)...")
+        # Obtener credenciales de la configuración
+        credentials_path = settings.GEE_CREDENTIAL_PATH
+        service_account_email = settings.GEE_SERVICE_ACCOUNT_EMAIL
+
+        if not credentials_path or not service_account_email:
+            logger.error("GEE_CREDENTIAL_PATH o GEE_SERVICE_ACCOUNT_EMAIL no configurados en .env")
+            raise HTTPException(
+                status_code=500, 
+                detail="Configuración de credenciales GEE incompleta."
+            )
+        
+        # Verificar si el archivo de credenciales existe
+        if not Path(credentials_path).is_file():
+             logger.error(f"Archivo de credenciales GEE no encontrado en: {credentials_path}")
+             raise HTTPException(
+                status_code=500, 
+                detail=f"Archivo de credenciales GEE no encontrado: {credentials_path}"
+            )
+
+        logger.info(f"Asegurando inicialización de GEE usando cuenta de servicio: {service_account_email}")
         try:
-            # Intentar inicializar GEE - buscará credenciales de earthengine authenticate
-            ee.Initialize()
-            logger.info("✅ Google Earth Engine inicializado correctamente (usando credenciales default).")
+            # Crear objeto de credenciales de cuenta de servicio
+            credentials = ee.ServiceAccountCredentials(service_account_email, credentials_path)
+            # Intentar inicializar GEE con las credenciales específicas
+            ee.Initialize(credentials=credentials)
+            logger.info("✅ Google Earth Engine inicializado correctamente con cuenta de servicio.")
             GEEService._initialized = True
-        except ee.EEException as e:
-            logger.error(f"Error inicializando Google Earth Engine: {str(e)}")
+        except Exception as e: # Capturar excepción más genérica aquí puede ser útil
+            logger.error(f"Error inicializando Google Earth Engine con cuenta de servicio: {str(e)}", exc_info=True)
             GEEService._initialized = False
             # Levantar excepción o manejar como sea apropiado
             raise HTTPException(
                 status_code=503,  # Service Unavailable
-                detail=f"Configuración inválida: {str(e)}"
+                detail=f"Error inicializando GEE: {str(e)}"
             )
 
         # Cargar la geometría DESPUÉS de inicializar GEE exitosamente
@@ -145,7 +166,9 @@ class GEEService:
                 # Usamos ee.Feature(None, ...) para no requerir geometría
                 return ee.Feature(None, {
                     'date': image.date().format('YYYY-MM-dd'),
-                    'fire_pixel_count': ee.Number(count).unmask(0) # Usar unmask(0) en lugar de fillna(0)
+                    # Devolver el numero directamente, sin unmask.
+                    # Si count es None (no hay imagen o region), esto sera manejado despues.
+                    'fire_pixel_count': count 
                 })
 
             # Aplicar la función a cada imagen
