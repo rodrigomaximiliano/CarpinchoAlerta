@@ -1,47 +1,38 @@
-from datetime import datetime
-from enum import Enum
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 from typing import Optional
+from datetime import datetime
+import enum 
 
-class ReportStatus(str, Enum):
-    pending = "pending"
-    verified = "verified"
-    in_progress = "in_progress"
-    resolved = "resolved"
-    false_alarm = "false_alarm"
+try:
+    from .user import User
+except ImportError:
+    User = None 
+
+class ReportStatus(str, enum.Enum):
+    PENDING = "pending"
+    VERIFIED = "verified"
+    RESOLVED = "resolved"
+    DISMISSED = "dismissed"
 
 class ReportBase(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
-    description: str = Field(..., max_length=500)
-    photo_url: Optional[HttpUrl] = None
-    is_anonymous: bool = False
+    description: Optional[str] = Field(None, max_length=500)
+    department: Optional[str] = Field(None, max_length=100) 
+    paraje: Optional[str] = Field(None, max_length=100)     
+    photo_url: Optional[str] = None 
 
 class ReportCreate(ReportBase):
-    pass
-
-class ReportUpdate(BaseModel):
-    status: Optional[ReportStatus] = None
-    description: Optional[str] = Field(None, max_length=500)
-    verification_notes: Optional[str] = Field(None, max_length=500)
+    pass 
 
 class ReportInDBBase(ReportBase):
     id: int
-    created_at: datetime
+    reporter_id: int
     status: ReportStatus
-    owner_id: Optional[int] = None
+    timestamp: datetime
 
     class Config:
         orm_mode = True
 
-# Solución para referencia circular
-from app.schemas.user import UserBase
-
 class Report(ReportInDBBase):
-    owner: Optional[UserBase] = None
-
-class ReportWithLocation(Report):
-    location_name: Optional[str] = None
-    distance_to_city: Optional[float] = Field(None, ge=0)
-
-Report.update_forward_refs()  # Resuelve referencias circulares
+    reporter: Optional[User] = None 
