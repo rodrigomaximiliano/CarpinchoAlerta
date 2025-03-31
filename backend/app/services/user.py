@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from app.db.models.user import User as UserModel  # Renombrar para evitar conflicto
 from app.schemas.user import UserCreate
-from app.core.security import get_password_hash, verify_password
+from app.core.security import hash_password, verify_password
 
 class UserService:
     def get_user_by_email(self, db: Session, *, email: str) -> Optional[UserModel]:
@@ -13,7 +13,7 @@ class UserService:
         """
         Crea un nuevo usuario.
         """
-        hashed_password = get_password_hash(user_in.password)
+        hashed_password = hash_password(user_in.password)
         db_user = UserModel(
             email=user_in.email,
             hashed_password=hashed_password,  # Guardar la contraseña hasheada

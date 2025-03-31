@@ -9,7 +9,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Backend para el sistema de prevención y monitoreo de incendios",
+    description="Sistema de prevención y monitoreo de incendios",
     version="1.0.0"
 )
 
