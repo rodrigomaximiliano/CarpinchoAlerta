@@ -9,7 +9,7 @@ firms_service = FIRMSService()
 logger = logging.getLogger(__name__)
 
 @router.get(
-    "/corrientes",
+    "/firms",
     response_model=FIRMSApiResponse,
     summary="Incendios en Corrientes",
     description="Obtiene datos de incendios activos en la provincia de Corrientes, Argentina"
