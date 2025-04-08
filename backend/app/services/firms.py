@@ -8,8 +8,13 @@ import logging
 import pandas as pd
 from io import StringIO
 from pathlib import Path
+from cachetools import cached, TTLCache # Importar cachetools
 
 logger = logging.getLogger(__name__)
+
+# Crear una caché con TTL de 24 horas (86400 segundos)
+# maxsize=10 significa que guardará hasta 10 combinaciones diferentes de (days, source)
+firms_cache = TTLCache(maxsize=10, ttl=86400)
 
 def _kelvin_to_celsius(kelvin: float) -> float:
     """Convierte temperatura de Kelvin a Celsius y redondea a 1 decimal."""
@@ -54,7 +59,7 @@ class FIRMSService:
     """Servicio para interactuar con la API de NASA FIRMS."""
     # BBOX Ampliado: min_lat, min_lon, max_lat, max_lon
     CORRIENTES_BBOX = "-60,-31,-57,-26" # lon_min, lat_min, lon_max, lat_max
-    DEFAULT_SOURCE = "VIIRS_SNPP_NRT" 
+    DEFAULT_SOURCE = "VIIRS_SNPP_NRT"
     DEFAULT_DAYS = 7 # Usar 7 días por defecto para depuración
 
     def __init__(self):
@@ -62,8 +67,13 @@ class FIRMSService:
         self.api_key = settings.FIRMS_API_KEY
         self.base_url = "https://firms.modaps.eosdis.nasa.gov/api/area/csv"
 
+    # Decorador para cachear la respuesta de esta función
+    # La clave de caché se generará automáticamente a partir de los argumentos (self, days, source)
+    @cached(cache=firms_cache)
     def get_active_fires(self, days: int = 1, source: str = DEFAULT_SOURCE) -> FIRMSApiResponse:
-        """Obtiene focos de calor activos, los formatea y devuelve una respuesta con resumen."""
+        """Obtiene focos de calor activos, los formatea y devuelve una respuesta con resumen.
+        La respuesta se cachea por 24 horas."""
+        logger.info(f"Ejecutando get_active_fires para days={days}, source={source}. Verificando caché...")
         if not 1 <= days <= 7:
             raise HTTPException(status_code=400, detail="El número de días debe estar entre 1 y 7")
 
@@ -72,15 +82,15 @@ class FIRMSService:
             raise HTTPException(status_code=500, detail="Configuración de API FIRMS incompleta")
 
         url = f"{self.base_url}/{self.api_key}/{source}/{self.CORRIENTES_BBOX}/{days}"
-        logger.info(f"Consultando FIRMS API: {url}") # Log URL
+        logger.info(f"Cache miss o TTL expirado. Consultando FIRMS API: {url}") # Log URL
 
         try:
             response = requests.get(url, timeout=30) # Aumentar timeout
-            response.raise_for_status() 
+            response.raise_for_status()
             logger.info(f"FIRMS API respondió con estado: {response.status_code}")
             response_text = response.text
             # Loguear inicio de respuesta para depuración
-            logger.debug(f"Respuesta FIRMS (inicio): {response_text[:500]}") 
+            logger.debug(f"Respuesta FIRMS (inicio): {response_text[:500]}")
 
             # Verificar si la respuesta está vacía o solo tiene encabezado
             lines = response_text.strip().split('\n')
@@ -92,7 +102,7 @@ class FIRMSService:
             raw_text = response_text
             num_lines = len(lines)
             logger.info(f"FIRMS API devolvió {num_lines} líneas (incluyendo encabezado).")
-            
+
             # Loguear respuesta completa si está en modo DEBUG
             logger.debug(f"FIRMS API Response Content:\n{raw_text}")
 
@@ -115,7 +125,7 @@ class FIRMSService:
                 try:
                     # Validar datos brutos con el schema FIRMSFireData
                     raw_model = FIRMSFireData(**fire)
-                    
+
                     # Combinar fecha y hora
                     timestamp = _combine_datetime(raw_model.acq_date, raw_model.acq_time)
                     if not timestamp: # Si falla la combinación, saltar este registro
@@ -152,7 +162,7 @@ class FIRMSService:
                 fires=formatted_fires
             )
 
-            logger.info(f"Procesamiento FIRMS completado. {summary.total_fires} focos encontrados en {days} día(s) usando {source}.")
+            logger.info(f"Procesamiento FIRMS completado. {summary.total_fires} focos encontrados en {days} día(s) usando {source}. Respuesta almacenada en caché.")
             return response_data
 
         except requests.exceptions.RequestException as e:

@@ -90,9 +90,11 @@ function App() {
           />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Rutas Protegidas */}
+          {/* Ruta Dashboard (ahora pública) */}
+          <Route path="/dashboard" element={<DashboardPage />} />
+
+          {/* Rutas Protegidas (si hubiera otras) */}
           <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
             {/* Aquí se podrían añadir más rutas protegidas */}
           </Route>
 

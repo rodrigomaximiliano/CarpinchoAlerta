@@ -12,4 +12,5 @@ earthengine-api>=0.1.390,<0.1.400
 geopy>=2.4.1,<2.5.0 
 pydantic>=2.5.0,<2.6.0 
 pydantic-settings>=2.1.0,<2.2.0 
-email-validator>=2.1.0,<2.2.0 
+email-validator>=2.1.0,<2.2.0
+cachetools>=5.3.3,<5.4.0 # Añadido para caché
