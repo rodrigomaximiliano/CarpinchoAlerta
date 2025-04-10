@@ -6,6 +6,8 @@ import HomePage from './pages/HomePage'; // Importar páginas
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ReportPage from './pages/ReportPage'; // Importar ReportPage
+import AwarenessPage from './pages/AwarenessPage'; // Importar AwarenessPage
 import ProtectedRoute from './components/ProtectedRoute'; // Importar ProtectedRoute
 import { checkAuth, logout, getCurrentUser } from './api/authService';
 
@@ -83,7 +85,8 @@ function App() {
       <main className="flex-grow-1"> {/* Contenido principal - usar flex-grow-1 */}
         <Routes>
           {/* Rutas Públicas */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage isAuthenticated={isAuthenticated} />} /> {/* Pasar isAuthenticated */}
+          <Route path="/awareness" element={<AwarenessPage />} /> {/* Añadir ruta de concientización */}
           <Route
             path="/login"
             element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
@@ -95,6 +98,7 @@ function App() {
 
           {/* Rutas Protegidas (si hubiera otras) */}
           <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+            <Route path="/report" element={<ReportPage />} /> {/* Añadir ruta de reporte */}
             {/* Aquí se podrían añadir más rutas protegidas */}
           </Route>
 

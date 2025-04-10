@@ -5,9 +5,13 @@ from sqlalchemy.orm import Session
 from app.core import security
 from app.core.config import settings
 from app.db.session import get_db
-from app.services.user import get_user_by_email
+from app.services.user import user_service  # Importa la instancia del servicio
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+
+def get_user_by_email(db: Session, email: str):
+    """Obtiene un usuario por su email utilizando el servicio de usuario."""
+    return user_service.get_user_by_email(db, email=email)
 
 def get_current_user(
     db: Session = Depends(get_db),
