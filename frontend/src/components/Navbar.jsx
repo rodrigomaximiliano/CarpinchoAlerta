@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Navbar, Container, Nav, Button } from 'react-bootstrap'; // Importar componentes de react-bootstrap
+import { Navbar, Container, Nav, Button } from 'react-bootstrap';
 import { logout } from '../api/authService';
 
-// Recibe isAuthenticated y onLogout como props desde App
-function AppNavbar({ isAuthenticated, onLogout }) { // Renombrado para evitar conflicto con Navbar de react-bootstrap
+// Ruta del logo desde la carpeta public
+const logoPath = "/carpinchex.png";
+
+function AppNavbar({ isAuthenticated, onLogout }) {
   const navigate = useNavigate();
 
   const handleLogoutClick = () => {
@@ -16,48 +18,62 @@ function AppNavbar({ isAuthenticated, onLogout }) { // Renombrado para evitar co
   };
 
   return (
-    // Usar el componente Navbar de react-bootstrap
-    <Navbar bg="dark" variant="dark" expand="lg" className="shadow-md">
+    <Navbar bg="dark" variant="dark" expand="lg" className="shadow-sm py-3">
       <Container>
-        {/* Brand/Logo */}
-        <Navbar.Brand as={Link} to="/" className="fw-bold">
-          Guardián del Iberá
+        {/* Logo alineado a la izquierda */}
+        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center gap-3">
+          <img
+            src={logoPath}
+            alt="Logo"
+            height="50"
+            className="d-inline-block rounded-circle"
+            style={{ objectFit: 'cover' }}
+          />
+          <span className="fw-bold text-uppercase" style={{ fontSize: '1.4rem', letterSpacing: '0.05rem' }}>
+            Guardián de Corrientes
+          </span>
         </Navbar.Brand>
 
-        {/* Toggle button para pantallas pequeñas */}
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
 
-        {/* Contenido colapsable del Navbar */}
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto align-items-center"> {/* ms-auto para alinear a la derecha */}
-            {/* Enlace Inicio siempre visible */}
-            <Nav.Link as={Link} to="/">Inicio</Nav.Link>
+          <Nav className="ms-auto align-items-center gap-4">
+            <Nav.Link as={Link} to="/" className="text-light fw-semibold fs-6">
+              Inicio
+            </Nav.Link>
+            <Nav.Link as={Link} to="/awareness" className="text-light fw-semibold fs-6">
+              Prevención
+            </Nav.Link>
 
-            {/* Enlaces condicionales según autenticación */}
             {isAuthenticated ? (
               <>
-                <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
-                {/* Botón Cerrar Sesión */}
+                <Nav.Link as={Link} to="/dashboard" className="text-light fw-semibold fs-6">
+                  Dashboard
+                </Nav.Link>
+                {/* Añadir enlace para reportar */}
+                <Nav.Link as={Link} to="/report" className="text-light fw-semibold fs-6">
+                  Reportar Foco
+                </Nav.Link>
                 <Button
-                  variant="outline-danger"
+                  variant="outline-light"
                   size="sm"
                   onClick={handleLogoutClick}
-                  className="ms-lg-2 mt-2 mt-lg-0" // Margen izquierdo en pantallas grandes, margen superior en pequeñas
+                  className="fw-semibold px-3"
                 >
                   Cerrar Sesión
                 </Button>
               </>
             ) : (
               <>
-                {/* Enlace Iniciar Sesión */}
-                <Nav.Link as={Link} to="/login">Iniciar Sesión</Nav.Link>
-                {/* Botón Registrarse */}
+                <Nav.Link as={Link} to="/login" className="text-light fw-semibold fs-6">
+                  Iniciar Sesión
+                </Nav.Link>
                 <Button
                   variant="primary"
                   size="sm"
                   as={Link}
                   to="/register"
-                  className="ms-lg-2 mt-2 mt-lg-0" // Margen izquierdo en pantallas grandes, margen superior en pequeñas
+                  className="fw-semibold px-3"
                 >
                   Registrarse
                 </Button>
@@ -70,4 +86,4 @@ function AppNavbar({ isAuthenticated, onLogout }) { // Renombrado para evitar co
   );
 }
 
-export default AppNavbar; // Exportar el componente renombrado
+export default AppNavbar;
