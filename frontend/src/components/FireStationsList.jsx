@@ -60,7 +60,7 @@ const initialStations = [
   { id: 44, name: 'Asociación de Bomberos Voluntarios de Yapeyú', address: 'Avenida Libertador S/N', city: 'Yapeyú', zip: '3231', phone: '03772 - 493047', email: 'bomberosvoluntariosyapeyuctes@gmail.com', type: 'Voluntarios' },
 ];
 
-// Ordenar alfabéticamente por ciudad y luego por nombre para consistencia
+// Ordenar alfabéticamente por departamento/paraje y luego por nombre para consistencia
 initialStations.sort((a, b) => {
   if (a.city < b.city) return -1;
   if (a.city > b.city) return 1;
@@ -69,25 +69,25 @@ initialStations.sort((a, b) => {
   return 0;
 });
 
-
 function FireStationsList() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCity, setFilterCity] = useState(''); // Estado para filtrar por ciudad
+  const [filterDepartment, setFilterDepartment] = useState(''); // Estado para filtrar por departamento
 
-  // Obtener lista única de ciudades para el filtro
-  const cities = useMemo(() => {
-    const citySet = new Set(initialStations.map(station => station.city));
-    return ['', ...Array.from(citySet).sort()]; // Añadir opción "Todas"
+  // Obtener lista única de departamentos
+  const departments = useMemo(() => {
+    const departmentSet = new Set(initialStations.map(station => station.city));
+    return ['', ...Array.from(departmentSet).sort()]; // Añadir opción "Todos"
   }, []); // Se calcula solo una vez
 
-  // Filtrar cuarteles según búsqueda y ciudad
+  // Filtrar cuarteles según búsqueda y departamento
   const filteredStations = useMemo(() => {
     return initialStations.filter(station => {
       const nameMatch = station.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const cityMatch = filterCity === '' || station.city === filterCity;
-      return nameMatch && cityMatch;
+      const departmentMatch =
+        filterDepartment === '' || station.city.toLowerCase() === filterDepartment.toLowerCase();
+      return nameMatch && departmentMatch;
     });
-  }, [searchTerm, filterCity]); // Se recalcula si cambia el término o la ciudad
+  }, [searchTerm, filterDepartment]); // Se recalcula si cambia algún filtro
 
   return (
     <Container className="my-5 p-4 bg-white rounded shadow-sm border">
@@ -107,18 +107,18 @@ function FireStationsList() {
           </InputGroup>
         </Col>
 
-        {/* Filtro por Ciudad */}
+        {/* Filtro por Departamento */}
         <Col md={6}>
           <InputGroup>
-             <InputGroup.Text><i className="bi bi-geo-alt-fill"></i></InputGroup.Text>
+            <InputGroup.Text><i className="bi bi-geo-alt-fill"></i></InputGroup.Text>
             <Form.Select
-              aria-label="Filtrar por ciudad"
-              value={filterCity}
-              onChange={(e) => setFilterCity(e.target.value)}
+              aria-label="Filtrar por departamento"
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
             >
-              {cities.map(city => (
-                <option key={city || 'all'} value={city}>
-                  {city === '' ? 'Todas las ciudades' : city}
+              {departments.map(department => (
+                <option key={department || 'all'} value={department}>
+                  {department === '' ? 'Todos los departamentos' : department}
                 </option>
               ))}
             </Form.Select>
@@ -148,9 +148,9 @@ function FireStationsList() {
           </ListGroup.Item>
         )}
       </ListGroup>
-       <p className="text-center text-muted mt-3 small">
-         Mostrando {filteredStations.length} de {initialStations.length} cuarteles.
-       </p>
+      <p className="text-center text-muted mt-3 small">
+        Mostrando {filteredStations.length} de {initialStations.length} cuarteles.
+      </p>
     </Container>
   );
 }
