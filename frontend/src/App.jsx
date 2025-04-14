@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ReportPage from './pages/ReportPage'; // Importar ReportPage
 import AwarenessPage from './pages/AwarenessPage'; // Importar AwarenessPage
+import FireStationsPage from './pages/FireStationsPage'; // Importar FireStationsPage
 import ProtectedRoute from './components/ProtectedRoute'; // Importar ProtectedRoute
 import { checkAuth, logout, getCurrentUser } from './api/authService';
 
@@ -92,6 +93,7 @@ function App() {
             element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
           />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/fire-stations" element={<FireStationsPage />} /> {/* Añadir ruta de cuarteles */}
 
           {/* Ruta Dashboard (ahora pública) */}
           <Route path="/dashboard" element={<DashboardPage />} />

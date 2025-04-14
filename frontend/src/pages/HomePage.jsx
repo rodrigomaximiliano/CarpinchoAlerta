@@ -69,8 +69,9 @@ function HomePage({ isAuthenticated }) {
           </Col>
         </Row>
 
+
         {/* Sección Funcionalidades (Tarjetas ajustadas) */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-4 mt-5"> {/* Añadido mt-5 para separar de la sección anterior */}
            <h2 className="h3">Explora los Datos</h2>
            <p className="text-muted">Accede a la información detallada en nuestro dashboard.</p>
         </div>

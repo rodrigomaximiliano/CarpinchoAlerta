@@ -44,6 +44,9 @@ function AppNavbar({ isAuthenticated, onLogout }) {
             <Nav.Link as={Link} to="/awareness" className="text-light fw-semibold fs-6">
               Prevención
             </Nav.Link>
+            <Nav.Link as={Link} to="/fire-stations" className="text-light fw-semibold fs-6">
+              Cuarteles
+            </Nav.Link>
 
             {isAuthenticated ? (
               <>
