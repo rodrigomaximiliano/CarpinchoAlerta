@@ -1,4 +1,4 @@
-# Carpincho Alerta - Backend
+# Carpincho Alerta 
 
 Sistema web y móvil para monitorear, prevenir incendios y fomentar la concientización ambiental en la provincia de Corrientes, Argentina.
 
