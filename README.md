@@ -1,4 +1,4 @@
-# Guardián del Iberá - Backend
+# Carpincho Alerta - Backend
 
 Sistema web y móvil para monitorear, prevenir incendios y fomentar la concientización ambiental en la provincia de Corrientes, Argentina.
 
@@ -68,5 +68,49 @@ Este repositorio contiene el backend desarrollado con FastAPI. Funcionalidades i
       uvicorn app.main:app --reload
       ```
     *   La API estará disponible en `http://127.0.0.1:8000` y la documentación interactiva (Swagger UI) en `http://127.0.0.1:8000/docs`.
+
+## Ejemplo de uso de endpoints
+
+### Crear reporte
+
+```json
+POST /api/v1/reports/
+{
+  "latitude": -27.4698,
+  "longitude": -58.8306,
+  "description": "Columna de humo visible",
+  "department": "Capital",
+  "paraje": "Paraje Ejemplo",
+  "photo_url": "https://ejemplo.com/foto.jpg"
+}
+```
+
+### Respuesta esperada
+
+```json
+{
+  "id": 1,
+  "latitude": -27.4698,
+  "longitude": -58.8306,
+  "description": "Columna de humo visible",
+  "department": "Capital",
+  "paraje": "Paraje Ejemplo",
+  "photo_url": "https://ejemplo.com/foto.jpg",
+  "status": "PENDING",
+  "created_at": "2024-06-01T12:00:00",
+  "reporter_id": 2
+}
+```
+
+## Troubleshooting
+
+- Si tienes problemas con migraciones, revisa que la variable `DATABASE_URL` esté correctamente configurada.
+- Si aparecen errores de dependencias, ejecuta `pip install -r requirements.txt` nuevamente.
+
+## Requisitos
+
+- Python >= 3.10 recomendado
+- pip >= 22
+- Alembic >= 1.11
 
 *(Instrucciones más detalladas y configuración de frontend se añadirán próximamente)*

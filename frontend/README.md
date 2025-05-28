@@ -11,9 +11,9 @@ Currently, two official plugins are available:
 
 If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 
-# Frontend - Guardián del Iberá
+# Frontend - Carpincho Alerta
 
-Este directorio contiene el frontend del sistema Guardián del Iberá, desarrollado con React y Vite. El objetivo principal del frontend es proporcionar una interfaz de usuario intuitiva para monitorear y prevenir incendios en la provincia de Corrientes, Argentina.
+Este directorio contiene el frontend del sistema Carpincho Alerta, desarrollado con React y Vite. El objetivo principal del frontend es proporcionar una interfaz de usuario intuitiva para monitorear y prevenir incendios en la provincia de Corrientes, Argentina.
 
 ## Funcionalidades Actuales
 
