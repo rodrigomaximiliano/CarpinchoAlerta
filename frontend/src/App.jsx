@@ -11,6 +11,7 @@ import AwarenessPage from './pages/AwarenessPage'; // Importar AwarenessPage
 import FireStationsPage from './pages/FireStationsPage'; // Importar FireStationsPage
 import ProtectedRoute from './components/ProtectedRoute'; // Importar ProtectedRoute
 import { checkAuth, logout, getCurrentUser } from './api/authService';
+import Footer from './components/Footer'; // Importar el nuevo componente Footer
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -108,11 +109,7 @@ function App() {
           <Route path="*" element={<div className="container text-center py-5"><h2>Página no encontrada (404)</h2></div>} />
         </Routes>
       </main>
-      
-       {/* Footer con clases de Bootstrap */}
-       <footer className="bg-dark text-white p-3 text-center mt-auto">
-         © 2025 Guardián del Iberá
-       </footer>
+      <Footer /> {/* Incluir el nuevo componente Footer */}
     </div>
   );
 }
