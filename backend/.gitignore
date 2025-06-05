@@ -53,6 +53,7 @@ env/
 *.db
 *.sqlite
 *.sqlite3
+incendios.db
 # Excepción para el archivo de ejemplo si existe
 !example.db
 

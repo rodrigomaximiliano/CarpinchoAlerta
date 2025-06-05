@@ -1,38 +1,59 @@
 from fastapi import APIRouter, HTTPException, Query
-from typing import List
 from app.schemas.external.firms import FIRMSApiResponse
-from app.services.firms import FIRMSService
+from app.schemas.responses import APIResponse  # <-- Importa el modelo correcto
+from app.schemas.firms import TimePeriod  # <-- Importar desde el archivo correcto
+from app.services.firms import FIRMSService, firms_cache  # Add firms_cache import
 import logging
+from datetime import datetime
+from typing import Optional
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/firms",
+    tags=["Focos de Calor"],
+)
+
 firms_service = FIRMSService()
 logger = logging.getLogger(__name__)
 
 @router.get(
-    "/firms",
-    response_model=FIRMSApiResponse,
-    summary="Incendios en Corrientes",
-    description="Obtiene datos de incendios activos en la provincia de Corrientes, Argentina"
+    "/",
+    response_model=APIResponse,  # <-- Usa el modelo correcto aquí
+    summary="Consulta de Focos de Calor"
 )
-async def get_corrientes_fires(days: int = Query(1, ge=1, le=7, description="Número de días a consultar (1-7)")):
-    """
-    Parámetros:
-    - days: Cantidad de días hacia atrás para consultar (1-7 días). Por defecto: 1.
-    """
+async def get_fires(
+    period: TimePeriod = Query(
+        default=TimePeriod.LAST_24H,
+        description="Período de consulta"
+    )
+):
+    """Obtiene datos de focos de calor según el período especificado."""
     try:
-        logger.info(f"Solicitud recibida para {days} días")
-        data = firms_service.get_active_fires(days=days)
-        
-        if not data:
-            return []
-            
-        return data
-        
-    except HTTPException:
-        raise
+        return firms_service.get_active_fires(period)
     except Exception as e:
-        logger.error(f"Error en endpoint: {str(e)}", exc_info=True)
+        logger.error(f"Error en get_fires: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="Error interno al procesar la solicitud"
+            detail={
+                "error": str(e),
+                "sugerencia": "Intente nuevamente en unos minutos"
+            }
+        )
+
+@router.get("/status")
+async def get_firms_status():
+    """Obtiene el estado de actualización de los datos"""
+    try:
+        return {
+            "ultima_actualizacion": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "tiempo_cache": f"{firms_cache.ttl/60:.1f} minutos",
+            "elementos_cacheados": len(firms_cache),
+            "proximo_refresco": datetime.fromtimestamp(
+                datetime.now().timestamp() + firms_cache.ttl
+            ).strftime("%Y-%m-%d %H:%M:%S")
+        }
+    except Exception as e:
+        logger.error(f"Error al obtener estado del cache: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Error al obtener estado de actualización"
         )
