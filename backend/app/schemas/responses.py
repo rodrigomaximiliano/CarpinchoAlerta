@@ -1,27 +1,27 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict
+from typing import List
 
 class FocoCalorResponse(BaseModel):
-    """Respuesta clara y traducida para el productor rural"""
+    """Respuesta para un foco de calor detectado"""
     latitud: float = Field(..., description="Latitud del foco detectado")
     longitud: float = Field(..., description="Longitud del foco detectado")
     fecha_hora: str = Field(..., description="Fecha y hora de detección (UTC)")
     temperatura_celsius: float | None = Field(None, description="Temperatura estimada en grados Celsius")
     temperatura_texto: str = Field(
         ..., 
-        description="Descripción simple de la temperatura",
+        description="Descripción de la temperatura",
         example="Muy caliente"
     )
     confianza: str = Field(..., description="Nivel de confianza de la detección (Alta/Nominal/Baja)")
     confianza_texto: str = Field(
         ..., 
-        description="Explicación simple de la confianza",
+        description="Explicación de la confianza",
         example="El satélite está seguro de este foco"
     )
     frp: float | None = Field(None, description="Potencia radiativa del fuego (MW)")
     intensidad_texto: str = Field(
         ..., 
-        description="Descripción simple de la intensidad",
+        description="Descripción de la intensidad",
         example="Fuego fuerte, visible desde lejos"
     )
     area_protegida: str | None = Field(None, description="Nombre del área protegida si corresponde")
@@ -31,7 +31,7 @@ class ResumenResponse(BaseModel):
     cantidad_focos: int = Field(..., description="Cantidad total de focos detectados")
     periodo: str = Field(..., description="Período consultado (ej: 24h, 48h, semana)")
     fuente_datos: str = Field(..., description="Fuente satelital (ej: VIIRS, MODIS)")
-    mensaje: str = Field(..., description="Mensaje claro para el usuario rural")
+    mensaje: str = Field(..., description="Mensaje de situación")
 
 class APIResponse(BaseModel):
     """Respuesta completa de la API"""
