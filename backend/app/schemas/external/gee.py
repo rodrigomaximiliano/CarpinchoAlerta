@@ -66,3 +66,23 @@ class GEEHistoricalApiResponse(BaseModel):
     """Schema for the complete API response for GEE historical fires."""
     summary: GEEHistoricalSummary
     daily_data: List[GEEHistoricalFireDay]
+
+# Schemas for NBR (Normalized Burn Ratio) Analysis
+
+class NBRResult(BaseModel):
+    """Schema for a single NBR calculation result."""
+    date: str = Field(..., description="Fecha de la imagen en formato YYYY-MM-dd")
+    nbr_value: float = Field(..., description="Valor del índice NBR")
+    dNBR: Optional[float] = Field(None, description="Diferencial NBR (pre-fuego vs post-fuego)")
+    severity: Optional[str] = Field(None, description="Severidad del daño por incendio (si aplica)")
+    geometry: Optional[Dict[str, Any]] = Field(None, description="Geometría del área analizada")
+
+class NBRAnalysisResponse(BaseModel):
+    """Schema for NBR analysis API response."""
+    pre_fire_date: str = Field(..., description="Fecha de la imagen pre-incendio")
+    post_fire_date: str = Field(..., description="Fecha de la imagen post-incendio")
+    results: List[NBRResult] = Field(..., description="Resultados del análisis NBR")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Metadatos adicionales del análisis"
+    )
