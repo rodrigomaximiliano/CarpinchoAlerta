@@ -241,3 +241,110 @@ class GEEService:
                 status_code=500,
                 detail=f"Error interno al obtener datos históricos de incendios: {str(e)}"
             )
+    
+    def calculate_nbr(self, pre_fire_date: str, post_fire_date: str, geometry: ee.Geometry = None):
+        """
+        Calcula el NBR (Normalized Burn Ratio) y dNBR (diferencial NBR) para un área determinada.
+        
+        Args:
+            pre_fire_date (str): Fecha pre-incendio en formato 'YYYY-MM-dd'
+            post_fire_date (str): Fecha post-incendio en formato 'YYYY-MM-dd'
+            geometry (ee.Geometry, opcional): Geometría del área de interés. Si es None, se usa la geometría de Corrientes.
+            
+        Returns:
+            dict: Diccionario con los resultados del análisis NBR
+        """
+        self._ensure_initialized()
+        
+        # Usar la geometría proporcionada o la de Corrientes por defecto
+        if geometry is None:
+            if GEEService._corrientes_geometry is None:
+                raise HTTPException(status_code=500, detail="Geometría de Corrientes no está cargada.")
+            geometry = GEEService._corrientes_geometry
+        
+        try:
+            # Definir la colección de imágenes Landsat 8 Surface Reflectance
+            # Nota: Podríamos hacer que el satélite sea configurable (Landsat 7, 8, 9, Sentinel-2, etc.)
+            collection = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+            
+            # Función para calcular el NBR a partir de una imagen Landsat
+            def calculate_nbr_for_image(image):
+                # Obtener las bandas necesarias (NIR y SWIR2)
+                # Bandas de Landsat 8: B5 = NIR, B7 = SWIR2
+                nir = image.select('SR_B5').multiply(0.0000275).add(-0.2)  # Escalado a reflectancia
+                swir2 = image.select('SR_B7').multiply(0.0000275).add(-0.2)  # Escalado a reflectancia
+                
+                # Calcular NBR = (NIR - SWIR2) / (NIR + SWIR2)
+                nbr = nir.subtract(swir2).divide(nir.add(swir2)).rename('NBR')
+                
+                # Añadir fecha como propiedad
+                return nbr.set('system:time_start', image.get('system:time_start'))
+            
+            # Obtener imágenes pre y post incendio
+            # Usamos un rango de fechas para asegurarnos de tener imágenes sin nubes
+            pre_fire_start = (datetime.strptime(pre_fire_date, '%Y-%m-%d') - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+            pre_fire_end = (datetime.strptime(pre_fire_date, '%Y-%m-%d') + datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+            
+            post_fire_start = (datetime.strptime(post_fire_date, '%Y-%m-%d') - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+            post_fire_end = (datetime.strptime(post_fire_date, '%Y-%m-%d') + datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+            
+            # Obtener imágenes pre y post incendio
+            pre_fire_collection = (collection.filterBounds(geometry)
+                                          .filterDate(pre_fire_start, pre_fire_end)
+                                          .sort('CLOUD_COVER')
+                                          .limit(1))
+            
+            post_fire_collection = (collection.filterBounds(geometry)
+                                           .filterDate(post_fire_start, post_fire_end)
+                                           .sort('CLOUD_COVER')
+                                           .limit(1))
+            
+            # Verificar que tengamos imágenes
+            pre_fire_count = pre_fire_collection.size().getInfo()
+            post_fire_count = post_fire_collection.size().getInfo()
+            
+            if pre_fire_count == 0 or post_fire_count == 0:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No se encontraron imágenes para las fechas especificadas. Pre-incendio: {pre_fire_count}, Post-incendio: {post_fire_count}"
+                )
+            
+            # Calcular NBR para las imágenes seleccionadas
+            pre_fire_nbr = calculate_nbr_for_image(pre_fire_collection.first())
+            post_fire_nbr = calculate_nbr_for_image(post_fire_collection.first())
+            
+            # Calcular dNBR (diferencia entre NBR pre y post incendio)
+            dnbr = pre_fire_nbr.subtract(post_fire_nbr).rename('dNBR')
+            
+            # Clasificar la severidad del incendio basada en dNBR
+            severity = dnbr.remap(
+                fromList=[-float('inf'), 0.1, 0.27, 0.44, 0.66, float('inf')],
+                toList=[0, 1, 2, 3, 4],  # 0: Aumento, 1-4: Severidad baja a alta
+                defaultValue=0
+            ).rename('severity')
+            
+            # Crear un diccionario con los resultados
+            results = {
+                'pre_fire_date': pre_fire_date,
+                'post_fire_date': post_fire_date,
+                'pre_fire_nbr': pre_fire_nbr.getInfo(),
+                'post_fire_nbr': post_fire_nbr.getInfo(),
+                'dnbr': dnbr.getInfo(),
+                'severity': severity.getInfo(),
+                'geometry': geometry.getInfo() if geometry else None
+            }
+            
+            return results
+            
+        except ee.EEException as e:
+            logger.exception(f"Error GEE en calculate_nbr: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al calcular el NBR: {str(e)}"
+            )
+        except Exception as e:
+            logger.exception(f"Error inesperado en calculate_nbr: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error interno al calcular el NBR: {str(e)}"
+            )

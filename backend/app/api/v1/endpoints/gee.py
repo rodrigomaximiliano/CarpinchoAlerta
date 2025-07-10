@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Body
 from app.services.gee import GEEService
-from app.schemas.external.gee import GEEHistoricalApiResponse
+from app.schemas.external.gee import GEEHistoricalApiResponse, NBRAnalysisResponse, NBRResult
 import datetime
 from typing import List, Dict, Any, Optional
+import ee
+import json
 
 router = APIRouter()
 
@@ -92,3 +94,149 @@ async def get_historical_fires(
         end_date=end_date
     )
     return fire_data
+
+@router.post("/nbr-analysis", 
+            response_model=NBRAnalysisResponse,
+            summary="Calcular el NBR (Normalized Burn Ratio)",
+            description="""
+            Calcula el NBR (Normalized Burn Ratio) para evaluar la severidad de un incendio.
+            Compara imágenes satelitales pre y post-incendio para determinar el daño causado.
+            """
+           )
+async def calculate_nbr_analysis(
+    pre_fire_date: str = Query(..., description="Fecha pre-incendio en formato 'YYYY-MM-DD'"),
+    post_fire_date: str = Query(..., description="Fecha post-incendio en formato 'YYYY-MM-DD'"),
+    geometry: Optional[Dict[str, Any]] = Body(
+        None,
+        example={
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [-60.0, -30.0],
+                    [-55.0, -30.0],
+                    [-55.0, -27.0],
+                    [-60.0, -27.0],
+                    [-60.0, -30.0]
+                ]
+            ]
+        },
+        description="Geometría GeoJSON del área de interés. Si no se proporciona, se usa la provincia de Corrientes."
+    ),
+    service: GEEService = Depends(get_gee_service)
+):
+    """
+    Calcula el NBR (Normalized Burn Ratio) para evaluar la severidad de un incendio.
+    
+    El NBR se calcula como: (NIR - SWIR2) / (NIR + SWIR2)
+    
+    El dNBR (diferencial NBR) se calcula como: NBR_pre_incendio - NBR_post_incendio
+    
+    Valores de severidad basados en dNBR:
+    - dNBR < 0.1: Aumento en la vegetación
+    - 0.1 <= dNBR < 0.27: Severidad baja
+    - 0.27 <= dNBR < 0.44: Severidad moderada-baja
+    - 0.44 <= dNBR < 0.66: Severidad moderada-alta
+    - dNBR >= 0.66: Severidad alta
+    """
+    try:
+        # Validar fechas
+        try:
+            pre_date = datetime.datetime.strptime(pre_fire_date, '%Y-%m-%d').date()
+            post_date = datetime.datetime.strptime(post_fire_date, '%Y-%m-%d').date()
+            
+            if pre_date >= post_date:
+                raise HTTPException(
+                    status_code=400,
+                    detail="La fecha pre-incendio debe ser anterior a la fecha post-incendio"
+                )
+                
+            # Asegurarse de que las fechas no estén en el futuro
+            today = datetime.date.today()
+            if pre_date > today or post_date > today:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Las fechas no pueden estar en el futuro"
+                )
+                
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Formato de fecha inválido. Usar YYYY-MM-DD"
+            )
+        
+        # Convertir la geometría de GeoJSON a objeto ee.Geometry si se proporciona
+        ee_geometry = None
+        if geometry:
+            try:
+                # Validar que la geometría sea un GeoJSON válido
+                if 'type' not in geometry or 'coordinates' not in geometry:
+                    raise ValueError("Formato GeoJSON inválido. Se requiere 'type' y 'coordinates'")
+                
+                # Crear geometría de Earth Engine a partir de GeoJSON
+                if geometry['type'].lower() == 'polygon':
+                    ee_geometry = ee.Geometry.Polygon(geometry['coordinates'])
+                elif geometry['type'].lower() == 'point':
+                    # Para un punto, creamos un buffer de 1km
+                    point = geometry['coordinates']
+                    ee_geometry = ee.Geometry.Point(point[0], point[1]).buffer(1000)  # 1km de radio
+                else:
+                    # Para otros tipos de geometría, intentamos crear un polígono delimitador
+                    ee_geometry = ee.Geometry(geometry).bounds()
+            except Exception as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Error al procesar la geometría: {str(e)}"
+                )
+        
+        # Llamar al servicio para calcular el NBR
+        results = service.calculate_nbr(
+            pre_fire_date=pre_fire_date,
+            post_fire_date=post_fire_date,
+            geometry=ee_geometry
+        )
+        
+        # Formatear la respuesta según el esquema NBRAnalysisResponse
+        response = {
+            'pre_fire_date': pre_fire_date,
+            'post_fire_date': post_fire_date,
+            'results': [
+                {
+                    'date': pre_fire_date,
+                    'nbr_value': results['pre_fire_nbr'],
+                    'dNBR': None,
+                    'severity': None,
+                    'geometry': results.get('geometry')
+                },
+                {
+                    'date': post_fire_date,
+                    'nbr_value': results['post_fire_nbr'],
+                    'dNBR': results['dnbr'],
+                    'severity': results['severity'],
+                    'geometry': results.get('geometry')
+                }
+            ],
+            'metadata': {
+                'description': 'Análisis NBR para evaluación de severidad de incendios',
+                'satellite': 'Landsat 8',
+                'processing_date': datetime.datetime.now().isoformat(),
+                'severity_scale': {
+                    '0': 'Aumento en la vegetación',
+                    '1': 'Severidad baja',
+                    '2': 'Severidad moderada-baja',
+                    '3': 'Severidad moderada-alta',
+                    '4': 'Severidad alta'
+                }
+            }
+        }
+        
+        return response
+        
+    except HTTPException:
+        # Re-lanzar excepciones HTTP existentes
+        raise
+    except Exception as e:
+        logger.exception(f"Error inesperado en calculate_nbr_analysis: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno al calcular el NBR: {str(e)}"
+        )
