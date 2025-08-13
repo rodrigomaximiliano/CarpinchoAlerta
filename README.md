@@ -1,116 +1,116 @@
-# Carpincho Alerta 
+# Carpincho Alerta  
 
-Sistema web y móvil para monitorear, prevenir incendios y fomentar la concientización ambiental en la provincia de Corrientes, Argentina.
+Web and mobile system for monitoring, preventing wildfires, and promoting environmental awareness in the province of Corrientes, Argentina.  
 
-## Estado Actual (Backend)
+## Current Status (Backend)  
 
-Este repositorio contiene el backend desarrollado con FastAPI. Funcionalidades implementadas:
+This repository contains the backend developed with FastAPI. Implemented features:  
 
-*   **Integración con FIRMS:** Obtención de datos de focos de calor activos (VIIRS NRT).
-*   **Integración con Google Earth Engine:**
-    *   Cálculo de estadísticas NDVI para áreas específicas.
-    *   Obtención de datos históricos de incendios (MODIS).
-*   **Autenticación de Usuarios:**
-    *   Registro de nuevos usuarios (`/api/v1/auth/register`).
-    *   Login con generación de tokens JWT (`/api/v1/auth/login`).
-    *   Endpoint protegido para obtener datos del usuario actual (`/api/v1/auth/me`).
-    *   Soporte inicial para roles de usuario (`citizen`, `admin`, `firefighter`).
-*   **Sistema de Reportes de Incendios:**
-    *   Endpoint para que usuarios autenticados creen reportes (`POST /api/v1/reports/`).
-    *   Almacenamiento de detalles: ubicación (lat/lon), descripción, departamento, paraje, foto (opcional), estado y usuario que reporta.
-    *   Estados de reporte: `PENDING`, `VERIFIED`, `RESOLVED`, `DISMISSED`.
-*   **Gestión de Base de Datos (Alembic):**
-    *   Inicialización y configuración de Alembic para manejar migraciones de la base de datos (compatible con SQLite y PostgreSQL).
-    *   Migración inicial para crear las tablas `users` y `reports`.
-*   **Estructura:** Organizada con servicios, schemas (Pydantic), modelos (SQLAlchemy) y routers.
+*   **FIRMS Integration:** Retrieval of active fire hotspot data (VIIRS NRT).  
+*   **Google Earth Engine Integration:**  
+    *   Calculation of NDVI statistics for specific areas.  
+    *   Retrieval of historical wildfire data (MODIS).  
+*   **User Authentication:**  
+    *   New user registration (`/api/v1/auth/register`).  
+    *   Login with JWT token generation (`/api/v1/auth/login`).  
+    *   Protected endpoint to get the current user's data (`/api/v1/auth/me`).  
+    *   Initial support for user roles (`citizen`, `admin`, `firefighter`).  
+*   **Wildfire Reporting System:**  
+    *   Endpoint for authenticated users to create reports (`POST /api/v1/reports/`).  
+    *   Storage of details: location (lat/lon), description, department, village, optional photo, status, and reporting user.  
+    *   Report statuses: `PENDING`, `VERIFIED`, `RESOLVED`, `DISMISSED`.  
+*   **Database Management (Alembic):**  
+    *   Initialization and configuration of Alembic to manage database migrations (compatible with SQLite and PostgreSQL).  
+    *   Initial migration to create the `users` and `reports` tables.  
+*   **Structure:** Organized with services, schemas (Pydantic), models (SQLAlchemy), and routers.  
 
-## Próximos Pasos
+## Next Steps  
 
-*   Reforzar control de acceso basado en roles (RBAC) para endpoints de reportes (ej. ver/modificar reportes).
-*   Desarrollar endpoints GET para consultar reportes (lista, por ID, por usuario, etc.).
-*   Implementar la lógica para actualizar el estado de los reportes.
-*   Desarrollar panel de control para autoridades (administradores, bomberos).
-*   Crear sistema de alertas (basado en reportes, focos de calor, etc.).
-*   Desarrollar el frontend (web/móvil).
+*   Strengthen role-based access control (RBAC) for report endpoints (e.g., view/modify reports).  
+*   Develop GET endpoints to query reports (list, by ID, by user, etc.).  
+*   Implement the logic to update report statuses.  
+*   Develop a control panel for authorities (administrators, firefighters).  
+*   Create an alert system (based on reports, hotspots, etc.).  
+*   Develop the frontend (web/mobile).  
 
-## Configuración y Ejecución
+## Setup & Execution  
 
-1.  **Clonar el repositorio:**
+1.  **Clone the repository:**
     ```bash
-    git clone <URL_DEL_REPOSITORIO>
+    git clone <REPOSITORY_URL>
     cd guardian-del-Ibera
     ```
 2.  **Backend:**
-    *   Navegar al directorio `backend`:
+    *   Navigate to the `backend` directory:
       ```bash
       cd backend
       ```
-    *   Crear y activar un entorno virtual (recomendado):
+    *   Create and activate a virtual environment (recommended):
       ```bash
       python -m venv venv
       # Windows
       .\venv\Scripts\activate
       # macOS/Linux
-      # source venv/bin/activate
+      source venv/bin/activate
       ```
-    *   Instalar dependencias:
+    *   Install dependencies:
       ```bash
       pip install -r requirements.txt
       ```
-    *   **Configurar Variables de Entorno:** Copiar `.env.example` a `.env` y rellenar los valores necesarios (como `DATABASE_URL`, `SECRET_KEY`, API keys).
-    *   **Aplicar Migraciones de Base de Datos:** (Asegúrate de que la `DATABASE_URL` en `.env` y `alembic.ini` sea correcta)
+    *   **Configure Environment Variables:** Copy `.env.example` to `.env` and fill in the required values (such as `DATABASE_URL`, `SECRET_KEY`, API keys).  
+    *   **Apply Database Migrations:** (Make sure the `DATABASE_URL` in `.env` and `alembic.ini` is correct)
       ```bash
       alembic upgrade head
       ```
-      *Nota: Si modificas los modelos SQLAlchemy, necesitarás generar una nueva migración con `alembic revision --autogenerate -m "Descripción del cambio"` antes de aplicar `upgrade`.*
-    *   **Ejecutar la aplicación:**
+      *Note: If you modify the SQLAlchemy models, you will need to generate a new migration with `alembic revision --autogenerate -m "Description of change"` before applying `upgrade`.*  
+    *   **Run the application:**
       ```bash
       uvicorn app.main:app --reload
       ```
-    *   La API estará disponible en `http://127.0.0.1:8000` y la documentación interactiva (Swagger UI) en `http://127.0.0.1:8000/docs`.
+    *   The API will be available at `http://127.0.0.1:8000` and the interactive documentation (Swagger UI) at `http://127.0.0.1:8000/docs`.  
 
-## Ejemplo de uso de endpoints
+## Example Endpoint Usage  
 
-### Crear reporte
+### Create Report  
 
 ```json
 POST /api/v1/reports/
 {
   "latitude": -27.4698,
   "longitude": -58.8306,
-  "description": "Columna de humo visible",
+  "description": "Visible smoke column",
   "department": "Capital",
-  "paraje": "Paraje Ejemplo",
-  "photo_url": "https://ejemplo.com/foto.jpg"
+  "paraje": "Example Village",
+  "photo_url": "https://example.com/photo.jpg"
 }
-```
 
-### Respuesta esperada
+Expected Response
 
-```json
 {
   "id": 1,
   "latitude": -27.4698,
   "longitude": -58.8306,
-  "description": "Columna de humo visible",
+  "description": "Visible smoke column",
   "department": "Capital",
-  "paraje": "Paraje Ejemplo",
-  "photo_url": "https://ejemplo.com/foto.jpg",
+  "paraje": "Example Village",
+  "photo_url": "https://example.com/photo.jpg",
   "status": "PENDING",
   "created_at": "2024-06-01T12:00:00",
   "reporter_id": 2
 }
-```
 
-## Troubleshooting
+Troubleshooting
 
-- Si tienes problemas con migraciones, revisa que la variable `DATABASE_URL` esté correctamente configurada.
-- Si aparecen errores de dependencias, ejecuta `pip install -r requirements.txt` nuevamente.
+    If you have migration issues, check that the DATABASE_URL variable is correctly set.
 
-## Requisitos
+    If you encounter dependency errors, run pip install -r requirements.txt again.
 
-- Python >= 3.10 recomendado
-- pip >= 22
-- Alembic >= 1.11
+Requirements
 
-*(Instrucciones más detalladas y configuración de frontend se añadirán próximamente)*
+    Python >= 3.10 recommended
+
+    pip >= 22
+
+    Alembic >= 1.11
+
+(More detailed instructions and frontend setup will be added soon)
